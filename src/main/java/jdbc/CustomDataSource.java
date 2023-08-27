@@ -12,15 +12,15 @@ public class CustomDataSource implements DataSource {
     private static volatile CustomDataSource instance;
     private final String driver;
     private final String url;
-    private final String username;
+    private final String name;
     private final String password;
 
-    private CustomDataSource(String driver, String url, String username, String password) {
+    private CustomDataSource(String driver, String url, String password, String name) {
         this.driver = driver;
         this.url = url;
-        this.username = username;
         this.password = password;
-
+        this.name = name;
+        // Initialize the database driver
         try {
             Class.forName(driver);
         } catch (ClassNotFoundException e) {
@@ -28,17 +28,11 @@ public class CustomDataSource implements DataSource {
         }
     }
 
-    public static CustomDataSource getInstance() {
+    public static CustomDataSource getInstance(String driver, String url, String password, String name) {
         if (instance == null) {
             synchronized (CustomDataSource.class) {
                 if (instance == null) {
-                    // Initialize the instance here
-                    instance = new CustomDataSource(
-                            instance.driver,
-                            instance.url,
-                            instance.username,
-                            instance.password
-                    );
+                    instance = new CustomDataSource(driver, url, password, name);
                 }
             }
         }
@@ -47,7 +41,7 @@ public class CustomDataSource implements DataSource {
 
     @Override
     public Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(url, username, password);
+        return DriverManager.getConnection(url, name, password);
     }
 
     @Override
@@ -80,15 +74,13 @@ public class CustomDataSource implements DataSource {
         return null;
     }
 
-    // Other DataSource interface methods (not implemented in this example)
-
     @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
-        throw new UnsupportedOperationException("Not implemented");
+        return null;
     }
 
     @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
-        throw new UnsupportedOperationException("Not implemented");
+        return false;
     }
 }

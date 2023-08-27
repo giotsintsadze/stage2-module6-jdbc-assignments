@@ -10,13 +10,18 @@ import java.util.List;
 public class SimpleJDBCRepository {
     private CustomDataSource dataSource;
 
+    private static final String createUserSQL = "INSERT INTO myusers (firstname, lastname, age) VALUES (?, ?, ?)";
+    private static final String updateUserSQL = "UPDATE myusers SET firstname = ?, lastname = ?, age = ? WHERE id = ?";
+    private static final String deleteUserSQL = "DELETE FROM myusers WHERE id = ?";
+    private static final String findUserByIdSQL = "SELECT * FROM myusers WHERE id = ?";
+    private static final String findUserByNameSQL = "SELECT * FROM myusers WHERE firstname = ?";
+    private static final String findAllUserSQL = "SELECT * FROM myusers";
+
     public SimpleJDBCRepository(CustomDataSource dataSource) {
         this.dataSource = dataSource;
     }
 
     public Long createUser(User user) {
-        String createUserSQL = "INSERT INTO users (first_name, last_name, age) VALUES (?, ?, ?)";
-
         try (Connection connection = dataSource.getConnection();
              PreparedStatement ps = connection.prepareStatement(createUserSQL, PreparedStatement.RETURN_GENERATED_KEYS)) {
 
@@ -34,13 +39,29 @@ public class SimpleJDBCRepository {
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error creating user", e);
+            throw new RuntimeException("Failed to create user", e);
+        }
+    }
+
+    public User findUserById(Long userId) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(findUserByIdSQL)) {
+
+            ps.setLong(1, userId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapResultSetToUser(rs);
+                } else {
+                    return null;
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to find user by ID", e);
         }
     }
 
     public User findUserByName(String userName) {
-        String findUserByNameSQL = "SELECT id, first_name, last_name, age FROM users WHERE username = ?";
-
         try (Connection connection = dataSource.getConnection();
              PreparedStatement ps = connection.prepareStatement(findUserByNameSQL)) {
 
@@ -48,46 +69,32 @@ public class SimpleJDBCRepository {
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return User.builder()
-                            .id(rs.getLong("id"))
-                            .firstName(rs.getString("first_name"))
-                            .lastName(rs.getString("last_name"))
-                            .age(rs.getInt("age"))
-                            .build();
+                    return mapResultSetToUser(rs);
                 } else {
                     return null;
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error finding user by name", e);
+            throw new RuntimeException("Failed to find user by name", e);
         }
     }
 
     public List<User> findAllUser() {
-        String findAllUserSQL = "SELECT id, first_name, last_name, age FROM users";
-
+        List<User> users = new ArrayList<>();
         try (Connection connection = dataSource.getConnection();
              PreparedStatement ps = connection.prepareStatement(findAllUserSQL);
              ResultSet rs = ps.executeQuery()) {
 
-            List<User> users = new ArrayList<>();
             while (rs.next()) {
-                users.add(User.builder()
-                        .id(rs.getLong("id"))
-                        .firstName(rs.getString("first_name"))
-                        .lastName(rs.getString("last_name"))
-                        .age(rs.getInt("age"))
-                        .build());
+                users.add(mapResultSetToUser(rs));
             }
-            return users;
         } catch (SQLException e) {
-            throw new RuntimeException("Error finding all users", e);
+            throw new RuntimeException("Failed to find all users", e);
         }
+        return users;
     }
 
     public User updateUser(User user) {
-        String updateUserSQL = "UPDATE users SET first_name = ?, last_name = ?, age = ? WHERE id = ?";
-
         try (Connection connection = dataSource.getConnection();
              PreparedStatement ps = connection.prepareStatement(updateUserSQL)) {
 
@@ -96,15 +103,33 @@ public class SimpleJDBCRepository {
             ps.setInt(3, user.getAge());
             ps.setLong(4, user.getId());
 
-            int rowsAffected = ps.executeUpdate();
-            if (rowsAffected > 0) {
-                return user;
-            } else {
-                return null;
-            }
+            ps.executeUpdate();
+
+            return user;
         } catch (SQLException e) {
-            throw new RuntimeException("Error updating user", e);
+            throw new RuntimeException("Failed to update user", e);
         }
+    }
+
+    private void deleteUser(Long userId) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(deleteUserSQL)) {
+
+            ps.setLong(1, userId);
+
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to delete user", e);
+        }
+    }
+
+    private User mapResultSetToUser(ResultSet rs) throws SQLException {
+        return User.builder()
+                .id(rs.getLong("id"))
+                .firstName(rs.getString("firstname"))
+                .lastName(rs.getString("lastname"))
+                .age(rs.getInt("age"))
+                .build();
     }
 
 }
