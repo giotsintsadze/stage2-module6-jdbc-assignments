@@ -8,15 +8,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SimpleJDBCRepository {
-    private Connection connection = null;
-    private PreparedStatement ps = null;
+    public Connection connection = null;
+    public PreparedStatement ps = null;
 
-    private static final String createUserSQL = "INSERT INTO myusers (firstname, lastname, age) VALUES (?, ?, ?)";
-    private static final String updateUserSQL = "UPDATE myusers SET firstname = ?, lastname = ?, age = ? WHERE id = ?";
-    private static final String deleteUserSQL = "DELETE FROM myusers WHERE id = ?";
-    private static final String findUserByIdSQL = "SELECT * FROM myusers WHERE id = ?";
-    private static final String findUserByNameSQL = "SELECT * FROM myusers WHERE firstname = ?";
-    private static final String findAllUserSQL = "SELECT * FROM myusers";
+    public static final String createUserSQL = "INSERT INTO myusers (firstname, lastname, age) VALUES (?, ?, ?)";
+    public static final String updateUserSQL = "UPDATE myusers SET firstname = ?, lastname = ?, age = ? WHERE id = ?";
+    public static final String deleteUserSQL = "DELETE FROM myusers WHERE id = ?";
+    public static final String findUserByIdSQL = "SELECT * FROM myusers WHERE id = ?";
+    public static final String findUserByNameSQL = "SELECT * FROM myusers WHERE firstname = ?";
+    public static final String findAllUserSQL = "SELECT * FROM myusers";
 
     public Long createUser(User user) {
         try {
