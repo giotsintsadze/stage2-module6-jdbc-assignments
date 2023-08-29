@@ -5,17 +5,24 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class CustomConnector {
-
+    public Connection connection;
     public Connection getConnection(String url) {
-        throw new UnsupportedOperationException("This method is not supported yet.");
+
+        try {
+            return DriverManager.getConnection(url);
+        } catch ( SQLException e) {
+            e.printStackTrace();
+        }
+        return connection;
     }
 
     public Connection getConnection(String url, String user, String password) {
+
         try {
-            Class.forName("com.mysql.jdbc.Driver");
             return DriverManager.getConnection(url, user, password);
-        } catch (ClassNotFoundException | SQLException e) {
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+        return connection;
     }
 }
