@@ -6,7 +6,6 @@ import lombok.Setter;
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.sql.Array;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
@@ -16,50 +15,44 @@ import java.util.logging.Logger;
 @Getter
 @Setter
 public class CustomDataSource implements DataSource {
-    
-    private static final Object MONITOR = new Object();
-    private static CustomDataSource instance;
-    private static final SQLException SQL_EXCEPTION = new SQLException();
-
+    private static volatile CustomDataSource instance;
     private final String driver;
     private final String url;
     private final String name;
     private final String password;
+    private static final Object lock = new Object();
 
     private CustomDataSource(String driver, String url, String password, String name) {
         this.driver = driver;
         this.url = url;
-        this.name = name;
         this.password = password;
+        this.name = name;
+        instance = this;
     }
 
     public static CustomDataSource getInstance() {
         if (instance == null) {
-            synchronized (MONITOR) {
+            synchronized (lock) {
                 if (instance == null) {
-                    instance = initializeInstance();
+                    try {
+                        Properties properties = new Properties();
+                        properties.load(
+                                CustomDataSource.class.getClassLoader().getResourceAsStream("app.properties")
+                        );
+                        instance = new CustomDataSource(
+                                properties.getProperty("postgres.driver"),
+                                properties.getProperty("postgres.url"),
+                                properties.getProperty("postgres.name"),
+                                properties.getProperty("postgres.password")
+
+                        );
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
         }
         return instance;
-    }
-
-    private static CustomDataSource initializeInstance() {
-        try {
-            Properties properties = new Properties();
-            properties.load(
-                    CustomDataSource.class.getClassLoader().getResourceAsStream("app.properties")
-            );
-
-            String driver = properties.getProperty("postgres.driver");
-            String url = properties.getProperty("postgres.url");
-            String password = properties.getProperty("postgres.password");
-            String name = properties.getProperty("postgres.name");
-
-            return new CustomDataSource(driver, url, password, name);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     @Override
