@@ -4,19 +4,16 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.sql.DataSource;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
-import java.util.Properties;
 import java.util.logging.Logger;
 
 @Getter
 @Setter
 public class CustomDataSource implements DataSource {
-
     private static volatile CustomDataSource instance;
     private final String driver;
     private final String url;
@@ -28,30 +25,27 @@ public class CustomDataSource implements DataSource {
         this.url = url;
         this.password = password;
         this.name = name;
-
-        try {
-            Class.forName(driver);
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException("Failed to load JDBC driver", e);
-        }
     }
 
     public static CustomDataSource getInstance() {
-        Properties properties = new Properties();
         if (instance == null) {
             synchronized (CustomDataSource.class) {
                 if (instance == null) {
-
-                    String driver = properties.getProperty("postgres.driver");
-                    String url = properties.getProperty("jdbc.url");
-                    String user = properties.getProperty("jdbc.user");
-                    String password = properties.getProperty("jdbc.password");
-
-                    instance = new CustomDataSource(driver, url, password, user);
+                    instance = new CustomDataSource(
+                            "org.postgresql.Driver",
+                            "jdbc:mysql://localhost:3306/myfirstdb",
+                            "password",
+                            "postgres"
+                    );
                 }
             }
         }
         return instance;
+    }
+
+    @Override
+    public Connection getConnection(String username, String password) throws SQLException {
+        return DriverManager.getConnection(this.url, this.name, this.password);
     }
 
     @Override
@@ -60,23 +54,18 @@ public class CustomDataSource implements DataSource {
     }
 
     @Override
-    public Connection getConnection(String username, String password) throws SQLException {
-        return DriverManager.getConnection(url, username, password);
-    }
-
-    @Override
     public PrintWriter getLogWriter() throws SQLException {
-        return null;
+        throw new SQLException();
     }
 
     @Override
     public void setLogWriter(PrintWriter out) throws SQLException {
-
+        throw new SQLException();
     }
 
     @Override
     public void setLoginTimeout(int seconds) throws SQLException {
-
+        throw new SQLException();
     }
 
     @Override
@@ -86,12 +75,12 @@ public class CustomDataSource implements DataSource {
 
     @Override
     public Logger getParentLogger() throws SQLFeatureNotSupportedException {
-        return null;
+        throw new SQLFeatureNotSupportedException();
     }
 
     @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
-        return null;
+        throw  new SQLException();
     }
 
     @Override
